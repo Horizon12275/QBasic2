@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource>
+        <file>assets/icons/favicon.ico</file>
+        <file>assets/icons/favicon16.ico</file>
+        <file>assets/icons/logo.jpg</file>
+    </qresource>
+</RCC>
