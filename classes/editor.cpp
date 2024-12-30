@@ -29,7 +29,7 @@ string Editor::getAllStatements()
     string allStmts = "";
     for (auto stmt : this->code)
     {
-        allStmts += stmt.second->content + "\n";
+        allStmts += stmt.second->getContent() + "\n";
     }
     return allStmts;
 }

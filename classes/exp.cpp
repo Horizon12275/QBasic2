@@ -14,6 +14,31 @@ Expression::~Expression()
 {
 }
 
+int Expression::getConstantValue()
+{
+    throw std::runtime_error("getConstantValue: Illegal expression type");
+}
+
+std::string Expression::getIdentifierName()
+{
+    throw std::runtime_error("getIdentifierName: Illegal expression type");
+}
+
+std::string Expression::getOperator()
+{
+    throw std::runtime_error("getOperator: Illegal expression type");
+}
+
+Expression *Expression::getLHS()
+{
+    throw std::runtime_error("getLHS: Illegal expression type");
+}
+
+Expression *Expression::getRHS()
+{
+    throw std::runtime_error("getRHS: Illegal expression type");
+}
+
 /*
  * --------------------------------------------------------------
  * Implementation notes: ConstantExp
@@ -93,15 +118,61 @@ CompoundExp::CompoundExp(std::string op, Expression *lhs, Expression *rhs)
     this->rhs = rhs;
 }
 
+// 递归析构左右子树
 CompoundExp::~CompoundExp()
 {
-    delete lhs;
-    delete rhs;
+    while (lhs != NULL)
+    {
+        Expression *temp = lhs;
+        lhs = lhs->getLHS();
+        delete temp;
+    }
+    while (rhs != NULL)
+    {
+        Expression *temp = rhs;
+        rhs = rhs->getRHS();
+        delete temp;
+    }
 }
 
+// use for print syntax tree, use BFS, also note the current level
 std::string CompoundExp::toString()
 {
-    return "(" + lhs->toString() + " " + op + " " + rhs->toString() + ")";
+    int level = 0;
+    std::string res = this->op + "\n";
+    std::queue<Expression *> current_level;
+    std::queue<Expression *> next_level;
+    current_level.push(lhs);
+    current_level.push(rhs);
+    while (!current_level.empty())
+    {
+        Expression *temp = current_level.front();
+        current_level.pop();
+        if (temp == NULL)
+        {
+            throw std::runtime_error("Syntax tree is not complete");
+        }
+        if (temp->type() == COMPOUND)
+        {
+            next_level.push(temp->getLHS());
+            next_level.push(temp->getRHS());
+            res += addTabBefore(level + 1, temp->getOperator()) + "\n";
+        }
+        else if (temp->type() == CONSTANT || temp->type() == IDENTIFIER)
+        {
+            res += addTabBefore(level + 1, temp->toString()) + "\n";
+        }
+        if (current_level.empty())
+        {
+            level++;
+            while (!next_level.empty())
+            {
+                current_level.push(next_level.front());
+                next_level.pop();
+            }
+        }
+    }
+    return res;
 }
 
 ExpressionType CompoundExp::type()

@@ -5,6 +5,7 @@
 #include "editor.h"
 #include "parser.h"
 #include "tokenizer.h"
+#include "utils.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui

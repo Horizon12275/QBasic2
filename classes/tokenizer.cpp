@@ -29,7 +29,7 @@ std::vector<std::string> Tokenizer::tokenize(const std::string &str)
             }
             continue; // Skip spaces
         }
-        if (isOperator(c) || isDelimiter(c))
+        if (isOperator(c))
         {
             if (!token.empty())
             {
@@ -53,9 +53,4 @@ std::vector<std::string> Tokenizer::tokenize(const std::string &str)
 bool Tokenizer::isOperator(char c)
 {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '<' || c == '>' || c == '(' || c == ')' || c == '%' || c == '^';
-}
-
-bool Tokenizer::isDelimiter(char c)
-{
-    return c == ',';
 }

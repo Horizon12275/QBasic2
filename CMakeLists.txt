@@ -46,6 +46,8 @@ set(PROJECT_SOURCES
     ${CMAKE_SOURCE_DIR}/classes/tokenizer.cpp
     ${CMAKE_SOURCE_DIR}/classes/editor.h
     ${CMAKE_SOURCE_DIR}/classes/editor.cpp
+    ${CMAKE_SOURCE_DIR}/classes/utils.h
+    ${CMAKE_SOURCE_DIR}/classes/utils.cpp
 
     ${WIN64_RESOURCES}  # 将Windows资源文件添加到项目源文件中
 )

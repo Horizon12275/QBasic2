@@ -5,8 +5,12 @@
 #include <string>
 #include <stdexcept>
 #include <cmath>
+#include <queue>
 #include "tokenizer.h"
+#include "settings.h"
 #include "evalstate.h"
+#include "utils.h"
+
 using namespace std;
 
 /* Forward reference */
@@ -48,11 +52,11 @@ public:
 
     /* Getter methods for convenience */
 
-    virtual int getConstantValue() = 0;
-    virtual std::string getIdentifierName() = 0;
-    virtual std::string getOperator() = 0;
-    virtual Expression *getLHS() = 0;
-    virtual Expression *getRHS() = 0;
+    virtual int getConstantValue();
+    virtual std::string getIdentifierName();
+    virtual std::string getOperator();
+    virtual Expression *getLHS();
+    virtual Expression *getRHS();
 };
 
 /*
@@ -71,7 +75,7 @@ public:
     virtual std::string toString();
     virtual ExpressionType type();
 
-    virtual int getConstantValue();
+    virtual int getConstantValue() override;
 
 private:
     int value;
@@ -93,7 +97,7 @@ public:
     virtual std::string toString();
     virtual ExpressionType type();
 
-    virtual string getIdentifierName();
+    virtual string getIdentifierName() override;
 
 private:
     std::string name;
@@ -116,9 +120,9 @@ public:
     virtual std::string toString();
     virtual ExpressionType type();
 
-    virtual std::string getOperator();
-    virtual Expression *getLHS();
-    virtual Expression *getRHS();
+    virtual std::string getOperator() override;
+    virtual Expression *getLHS() override;
+    virtual Expression *getRHS() override;
 
 private:
     std::string op;

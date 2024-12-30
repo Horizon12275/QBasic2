@@ -12,5 +12,4 @@ public:
 
 private:
     bool isOperator(char c);
-    bool isDelimiter(char c);
 };

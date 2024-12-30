@@ -16,7 +16,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnDebugMode, &QPushButton::clicked, this, &MainWindow::setUIForDebugMode);
     connect(ui->btnExitDebugMode, &QPushButton::clicked, this, &MainWindow::setUIExitDebugMode);
 
-    // Connect the button to clear all code with the slot function
+    // Connect the button to corresponding slot functions
+    connect(ui->btnRunCode, &QPushButton::clicked, this, &MainWindow::runCode);
+    connect(ui->btnLoadCode, &QPushButton::clicked, this, &MainWindow::loadCode);
     connect(ui->btnClearCode, &QPushButton::clicked, this, &MainWindow::cleanAll);
 }
 
@@ -98,6 +100,7 @@ void MainWindow::setUIExitDebugMode()
     isDebugMode = false;
 }
 
+// Clear all code and initialize all variables
 void MainWindow::cleanAll()
 {
     ui->CodeDisplay->clear();
@@ -125,6 +128,19 @@ void MainWindow::debugRunCode()
 
 void MainWindow::loadCode()
 {
+    // 通过文件选择器选择一个文件
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Text Files (*.txt)"));
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QMessageBox::warning(this, tr("Warning"), tr("Cannot read file %1:\n%2.").arg(fileName).arg(file.errorString()));
+        return;
+    }
+    // QTextStream in(&file);
+    // // 读取文件内容
+    // QString line = in.readLine();
+    // std::string str = line.toStdString();
+    // std::stringstream ss(str);
 }
 
 // Helper function to trim leading and trailing spaces
@@ -179,13 +195,25 @@ void MainWindow::parseCmdInput(string cmdInput)
         // Append the help information to the result display
         ui->textBrowser->append(HELPINFO);
     }
+    else if (cmdInput == "LOAD")
+    {
+        cleanAll();
+        loadCode();
+    }
     else
     {
+        Tokenizer tokenizer;
+        vector<string> tokens = tokenizer.tokenize(cmdInput);
+        for (auto token : tokens)
+        {
+            ui->textBrowser->append(token.c_str());
+            ui->textBrowser->append("\n");
+        }
         // Try to parse the command as a new statement
         Statement *stmt;
         try
         {
-            stmt = parser->parseStatement(cmdInput);
+            stmt = parser->parseStatement(tokens);
         }
         catch (exception &e) // If the command is not a valid statement, catch the exception and pop up a message box
         {
@@ -194,18 +222,10 @@ void MainWindow::parseCmdInput(string cmdInput)
         }
         if (stmt == NULL)
         {
+            QMessageBox::warning(this, "Error::", "NULL statement");
             return;
         }
         editor->addStatement(stmt->lineNum, stmt);
         refreshCodeDisplay();
-
-        // Tokenizer Test
-        // Tokenizer tokenizer;
-        // vector<string> tokens = tokenizer.tokenize(cmdInput);
-        // for (auto token : tokens)
-        // {
-        //     ui->textBrowser->append(token.c_str());
-        //     ui->textBrowser->append("\n");
-        // }
     }
 }
