@@ -128,14 +128,19 @@ void MainWindow::refreshCodeDisplay()
 
 void MainWindow::runCode()
 {
+    editorContext->clear();
+    editorContext->clear();
 }
 
 void MainWindow::debugRunCode()
 {
+    editorContext->clear();
+    editorContext->clear();
 }
 
 void MainWindow::loadCode()
 {
+    cleanAll();
     // 通过文件选择器选择一个文件
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Text Files (*.txt)"));
     QFile file(fileName);
@@ -144,11 +149,13 @@ void MainWindow::loadCode()
         QMessageBox::warning(this, tr("Warning"), tr("Cannot read file %1:\n%2.").arg(fileName).arg(file.errorString()));
         return;
     }
-    // QTextStream in(&file);
-    // // 读取文件内容
-    // QString line = in.readLine();
-    // std::string str = line.toStdString();
-    // std::stringstream ss(str);
+    QTextStream in(&file);
+    for (int i = 0; !file.atEnd(); i++)
+    {
+        QString line = in.readLine();
+        string str = line.toStdString();
+        parseCmdInput(str);
+    }
 }
 
 // Helper function to trim leading and trailing spaces

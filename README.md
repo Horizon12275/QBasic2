@@ -1,4 +1,37 @@
-Compile And Debug: Shift + F5
+## 测试用例
+
+```
+10 REM Program to add two numbers 
+20 INPUT n1 
+30 INPUT n2 
+40 LET total = n1 + n2 
+50 PRINT total 
+60 END 
+```
+
+```
+10 REM Program to simulate a countdown 
+20 LET T = 10 
+30 IF T < 0 THEN 70 
+40 PRINT T 
+50 LET T = T - 1 
+60 GOTO 30 
+70 END 
+```
+
+```
+100 REM Program to print the Fibonacci sequence.
+110 LET max = 10000
+120 LET n1 = 0
+130 LET n2 = 1
+140 IF n1 > max THEN 190
+145 PRINT n1
+150 LET n3 = n1 + n2
+160 LET n1 = n2
+170 LET n2 = n3
+180 GOTO 140
+190 END
+```
 
 ## 思路
 

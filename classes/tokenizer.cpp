@@ -14,12 +14,14 @@ std::vector<std::string> Tokenizer::tokenize(const std::string &str)
     // Replace '**' with '^'
     std::string powStr = std::regex_replace(modStr, std::regex("\\*\\*"), "^");
 
+    std::string finalStr = powStr;
+
     // Split the string into tokens
     std::vector<std::string> tokens;
     std::string token;
-    for (size_t i = 0; i < str.size(); ++i)
+    for (size_t i = 0; i < finalStr.size(); ++i)
     {
-        char c = str[i];
+        char c = finalStr[i];
         if (std::isspace(c))
         {
             if (!token.empty())
