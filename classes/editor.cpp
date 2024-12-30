@@ -48,3 +48,13 @@ void Editor::clear()
     }
     this->code.clear();
 }
+
+std::string Editor::getAllSyntaxTrees()
+{
+    string allTrees = "";
+    for (auto stmt : this->code)
+    {
+        allTrees += stmt.second->getSyntaxTree();
+    }
+    return allTrees;
+}

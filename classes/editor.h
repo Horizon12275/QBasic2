@@ -17,5 +17,6 @@ public:
     void addStatement(int lineNum, Statement *stmt);
     void removeStatement(int lineNum);
     string getAllStatements();
+    string getAllSyntaxTrees();
     void clear();
 };

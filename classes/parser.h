@@ -4,6 +4,7 @@
 
 #include "settings.h"
 #include "statement.h"
+#include <stack>
 
 class Parser
 {

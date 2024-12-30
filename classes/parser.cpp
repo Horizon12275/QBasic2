@@ -164,6 +164,100 @@ Expression *Parser::parseExpression(const vector<string> &tokens)
         throw std::runtime_error("Invalid expression");
     }
     Expression *root = NULL;
+    stack<Expression *> expStack;
+    stack<string> opStack;
+
+    for (size_t i = 0; i < tokens.size(); ++i)
+    {
+        const string &token = tokens[i];
+        if (isConstant(token))
+        {
+            expStack.push(new ConstantExp(stoi(token)));
+        }
+        else if (varNameValid(token))
+        {
+            expStack.push(new IdentifierExp(token));
+        }
+        else if (isOperator(token))
+        {
+            if (token == "+" || token == "-")
+            {
+                if (i == 0 || tokens[i - 1] == "(")
+                {
+                    expStack.push(new ConstantExp(0));
+                }
+            }
+            while (!opStack.empty() && getPrecedence(opStack.top()) >= getPrecedence(token))
+            {
+                string op = opStack.top();
+                opStack.pop();
+                if (expStack.size() < 2)
+                {
+                    throw std::runtime_error("Invalid expression");
+                }
+                Expression *rhs = expStack.top();
+                expStack.pop();
+                Expression *lhs = expStack.top();
+                expStack.pop();
+                expStack.push(new CompoundExp(op, lhs, rhs));
+            }
+            opStack.push(token);
+        }
+        else if (token == "(")
+        {
+            opStack.push(token);
+        }
+        else if (token == ")")
+        {
+            while (!opStack.empty() && opStack.top() != "(")
+            {
+                string op = opStack.top();
+                opStack.pop();
+                if (expStack.size() < 2)
+                {
+                    throw std::runtime_error("Invalid expression");
+                }
+                Expression *rhs = expStack.top();
+                expStack.pop();
+                Expression *lhs = expStack.top();
+                expStack.pop();
+                expStack.push(new CompoundExp(op, lhs, rhs));
+            }
+            if (opStack.empty())
+            {
+                throw std::runtime_error("Mismatched parentheses");
+            }
+            opStack.pop();
+        }
+        else
+        {
+            throw std::runtime_error("Invalid token: " + token);
+        }
+    }
+
+    while (!opStack.empty())
+    {
+        string op = opStack.top();
+        opStack.pop();
+        if (expStack.size() < 2)
+        {
+            throw std::runtime_error("Invalid expression");
+        }
+        Expression *rhs = expStack.top();
+        expStack.pop();
+        Expression *lhs = expStack.top();
+        expStack.pop();
+        expStack.push(new CompoundExp(op, lhs, rhs));
+    }
+
+    if (expStack.size() != 1)
+    {
+        throw std::runtime_error("Invalid expression");
+    }
+
+    root = expStack.top();
+    expStack.pop();
+
     return root;
 }
 

@@ -129,6 +129,12 @@ void MainWindow::refreshCodeDisplay()
 void MainWindow::runCode()
 {
     editorContext->clear();
+    ui->treeDisplay->clear();
+    ui->monitorDisplay->clear();
+
+    // print Syntax Tree in the treeDisplay
+    ui->treeDisplay->append(editor->getAllSyntaxTrees().c_str());
+
     editorContext->clear();
 }
 
@@ -150,11 +156,10 @@ void MainWindow::loadCode()
         return;
     }
     QTextStream in(&file);
-    for (int i = 0; !file.atEnd(); i++)
+    while (!in.atEnd())
     {
         QString line = in.readLine();
-        string str = line.toStdString();
-        parseCmdInput(str);
+        parseCmdInput(line.toStdString());
     }
 }
 
