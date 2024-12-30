@@ -181,12 +181,25 @@ IfStmt::IfStmt(int lineNum, vector<string> tokens) : Statement(lineNum, tokens)
 {
     this->rootExp = NULL;
     this->targetLineNum = -1;
+    this->lhs = NULL;
+    this->rhs = NULL;
+}
+
+IfStmt::~IfStmt()
+{
+    delete lhs;
+    delete rhs;
 }
 
 // TODO
 std::string IfStmt::getSyntaxTree()
 {
-    return std::to_string(lineNum) + " IF " + rootExp->toString() + " THEN\n" + MYTAB + std::to_string(targetLineNum);
+    std::string res = std::to_string(lineNum) + " IF THEN\n";
+    res += addMYTabBeforeEachLine(lhs->toString()) + "\n";
+    res += MYTAB + cmpOp + "\n";
+    res += addMYTabBeforeEachLine(rhs->toString()) + "\n";
+    res += MYTAB + std::to_string(targetLineNum) + "\n";
+    return res;
 }
 
 StatementType IfStmt::type()

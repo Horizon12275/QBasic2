@@ -38,9 +38,6 @@ using namespace std;
 // vector<string> KEYWORDS = {"REM", "LET", "PRINT", "INPUT", "GOTO", "IF", "THEN", "END", "RUN", "LOAD", "LIST", "CLEAR", "HELP", "QUIT"};
 // vector<string> COMMANDS = {"RUN", "LOAD", "LIST", "CLEAR", "HELP", "QUIT"};
 
-#define KEYWORDS \
-    vector<string> { "REM", "LET", "PRINT", "INPUT", "GOTO", "IF", "THEN", "END", "RUN", "LOAD", "LIST", "CLEAR", "HELP", "QUIT" }
-
 #define HELPINFO "Commands:\n"                                                \
                  "\tRUN: \trun the code in the editor\n"                      \
                  "\tLOAD: \tload the code from a file\n"                      \

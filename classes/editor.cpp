@@ -16,6 +16,12 @@ Editor::~Editor()
 
 void Editor::addStatement(int lineNum, Statement *stmt)
 {
+    // If the line number already exists, remove the old statement and release the memory
+    if (this->code.find(lineNum) != this->code.end())
+    {
+        delete this->code[lineNum];
+        this->removeStatement(lineNum);
+    }
     this->code[lineNum] = stmt;
 }
 
@@ -29,7 +35,16 @@ string Editor::getAllStatements()
     string allStmts = "";
     for (auto stmt : this->code)
     {
-        allStmts += stmt.second->getContent() + "\n";
+        allStmts += std::to_string(stmt.second->lineNum) + " " + stmt.second->getContent() + "\n";
     }
     return allStmts;
+}
+
+void Editor::clear()
+{
+    for (auto stmt : this->code)
+    {
+        delete stmt.second;
+    }
+    this->code.clear();
 }

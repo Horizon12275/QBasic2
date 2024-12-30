@@ -10,7 +10,161 @@ Statement *Parser::parseStatement(const vector<string> &tokens)
     {
         throw std::runtime_error("Invalid line number: " + tokens[0]);
     }
+    if (tokens[1] == "REM")
+    {
+        return parseRemStmt(tokens);
+    }
+    if (tokens[1] == "LET")
+    {
+        return parseLetStmt(tokens);
+    }
+    if (tokens[1] == "PRINT")
+    {
+        return parsePrintStmt(tokens);
+    }
+    if (tokens[1] == "INPUT")
+    {
+        return parseInputStmt(tokens);
+    }
+    if (tokens[1] == "GOTO")
+    {
+        return parseGotoStmt(tokens);
+    }
+    if (tokens[1] == "IF")
+    {
+        return parseIfStmt(tokens);
+    }
+    if (tokens[1] == "END")
+    {
+        return parseEndStmt(tokens);
+    }
+    throw std::runtime_error("Invalid statement: " + tokens[1]);
     return NULL;
+}
+
+RemStmt *Parser::parseRemStmt(const vector<string> &tokens)
+{
+    if (tokens.size() < 3)
+    {
+        throw std::runtime_error("REM statement too short");
+    }
+    string remContent = "";
+    for (size_t i = 2; i < tokens.size(); i++)
+    {
+        remContent += tokens[i] + " ";
+    }
+    return new RemStmt(stoi(tokens[0]), remContent, tokens);
+}
+
+LetStmt *Parser::parseLetStmt(const vector<string> &tokens)
+{
+    if (tokens.size() < 5)
+    {
+        throw std::runtime_error("LET statement too short");
+    }
+    if (!varNameValid(tokens[2]))
+    {
+        throw std::runtime_error("Invalid variable name: " + tokens[2]);
+    }
+    if (tokens[3] != "=")
+    {
+        throw std::runtime_error("Invalid LET statement");
+    }
+    vector<string> expTokens(tokens.begin() + 2, tokens.end());
+    LetStmt *stmt = new LetStmt(stoi(tokens[0]), tokens);
+    stmt->rootExp = parseExpression(expTokens);
+    return stmt;
+}
+
+PrintStmt *Parser::parsePrintStmt(const vector<string> &tokens)
+{
+    if (tokens.size() < 3)
+    {
+        throw std::runtime_error("PRINT statement too short");
+    }
+    vector<string> expTokens(tokens.begin() + 2, tokens.end());
+    PrintStmt *stmt = new PrintStmt(stoi(tokens[0]), tokens);
+    stmt->rootExp = parseExpression(expTokens);
+    return stmt;
+}
+
+InputStmt *Parser::parseInputStmt(const vector<string> &tokens)
+{
+    if (tokens.size() != 3)
+    {
+        throw std::runtime_error("INPUT statement length error");
+    }
+    if (!varNameValid(tokens[2]))
+    {
+        throw std::runtime_error("Invalid variable name: " + tokens[2]);
+    }
+    return new InputStmt(stoi(tokens[0]), tokens);
+}
+
+// GOTO 后面是常量
+GotoStmt *Parser::parseGotoStmt(const vector<string> &tokens)
+{
+    if (tokens.size() != 3)
+    {
+        throw std::runtime_error("GOTO statement length error");
+    }
+    if (!isValidLineNum(tokens[2]))
+    {
+        throw std::runtime_error("Invalid line number: " + tokens[2]);
+    }
+    GotoStmt *stmt = new GotoStmt(stoi(tokens[0]), tokens);
+    stmt->targetLineNum = stoi(tokens[2]);
+    return stmt;
+}
+
+IfStmt *Parser::parseIfStmt(const vector<string> &tokens)
+{
+    int n = tokens.size();
+    if (tokens[n - 2] != "THEN" || !isValidLineNum(tokens[n - 1]))
+    {
+        throw std::runtime_error("Invalid IF statement");
+    }
+    // find the cmp operator
+    int cmpIndex = -1;
+    for (size_t i = 2; i < tokens.size() - 2; i++)
+    {
+        if (tokens[i] == "<" || tokens[i] == ">" || tokens[i] == "=")
+        {
+            cmpIndex = i;
+            break;
+        }
+    }
+    if (cmpIndex == -1)
+    {
+        throw std::runtime_error("Invalid IF statement");
+    }
+    vector<string> lhsTokens(tokens.begin() + 2, tokens.begin() + cmpIndex);
+    vector<string> rhsTokens(tokens.begin() + cmpIndex + 1, tokens.end() - 2);
+    IfStmt *stmt = new IfStmt(stoi(tokens[0]), tokens);
+    stmt->lhs = parseExpression(lhsTokens);
+    stmt->rhs = parseExpression(rhsTokens);
+    stmt->cmpOp = tokens[cmpIndex];
+    stmt->targetLineNum = stoi(tokens[n - 1]);
+    return stmt;
+}
+
+EndStmt *Parser::parseEndStmt(const vector<string> &tokens)
+{
+    if (tokens.size() != 2)
+    {
+        throw std::runtime_error("END statement length error");
+    }
+    return new EndStmt(stoi(tokens[0]), tokens);
+}
+
+Expression *Parser::parseExpression(const vector<string> &tokens)
+{
+    if (!isValidExpression(tokens))
+    {
+        throw std::runtime_error("Invalid expression");
+    }
+    Expression *root = NULL;
+    return root;
 }
 
 // 行号需要为不超过1000000的正整数，否则提示用户行号错误。
@@ -42,6 +196,7 @@ bool Parser::varNameValid(const string &varName)
     {
         return false;
     }
+    vector<string> KEYWORDS = {"REM", "LET", "PRINT", "INPUT", "GOTO", "IF", "THEN", "END", "RUN", "LOAD", "LIST", "CLEAR", "HELP", "QUIT"};
     if (find(KEYWORDS.begin(), KEYWORDS.end(), varName) != KEYWORDS.end())
     {
         return false;

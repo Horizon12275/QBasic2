@@ -27,7 +27,7 @@ std::string addTabBefore(int tabCnt, std::string str)
     return tabStr + str;
 }
 
-int precedence(std::string op)
+int getPrecedence(std::string op)
 {
     if (op == "+" || op == "-")
     {
@@ -42,4 +42,25 @@ int precedence(std::string op)
         return 3;
     }
     return 0;
+}
+
+std::string addMYTabBeforeEachLine(std::string str)
+{
+    std::string newStr = "";
+    std::string line = "";
+    for (size_t i = 0; i < str.size(); i++)
+    {
+        char c = str[i];
+        if (c == '\n')
+        {
+            newStr += MYTAB + line + "\n";
+            line = "";
+        }
+        else
+        {
+            line += c;
+        }
+    }
+    newStr += MYTAB + line;
+    return newStr;
 }

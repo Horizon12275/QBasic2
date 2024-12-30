@@ -172,6 +172,11 @@ std::string CompoundExp::toString()
             }
         }
     }
+    // erase the last '\n'
+    if (res[res.size() - 1] == '\n')
+    {
+        res.pop_back();
+    }
     return res;
 }
 

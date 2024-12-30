@@ -12,4 +12,7 @@ int myMod(int a, int b);
 
 std::string addTabBefore(int tabCnt, std::string str);
 
-int precedence(std::string op);
+// 在每一行的开头加上一个MYTAB（每一行用\n分隔）
+std::string addMYTabBeforeEachLine(std::string str);
+
+int getPrecedence(std::string op);

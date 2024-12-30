@@ -11,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Initialize the editor and parser
     editor = new Editor();
     parser = new Parser();
+    editorContext = new EvaluationContext();
+    directContext = new EvaluationContext();
 
     // Connect the button to switch to debug mode with the slot function
     connect(ui->btnDebugMode, &QPushButton::clicked, this, &MainWindow::setUIForDebugMode);
@@ -27,6 +29,8 @@ MainWindow::~MainWindow()
     delete ui;
     delete editor;
     delete parser;
+    delete editorContext;
+    delete directContext;
 }
 
 /*
@@ -108,6 +112,10 @@ void MainWindow::cleanAll()
     ui->treeDisplay->clear();
     ui->monitorDisplay->clear();
     ui->breakPointsDisplay->clear();
+
+    editor->clear();
+    editorContext->clear();
+    directContext->clear();
 }
 
 void MainWindow::refreshCodeDisplay()
@@ -204,10 +212,20 @@ void MainWindow::parseCmdInput(string cmdInput)
     {
         Tokenizer tokenizer;
         vector<string> tokens = tokenizer.tokenize(cmdInput);
-        for (auto token : tokens)
+        if (tokens.empty())
         {
-            ui->textBrowser->append(token.c_str());
-            ui->textBrowser->append("\n");
+            return;
+        }
+        // if token vector is only one element, then it is a line number,
+        // clear the statement with this line number
+        if (tokens.size() == 1)
+        {
+            if (parser->isValidLineNum(tokens[0]))
+            {
+                editor->removeStatement(stoi(tokens[0]));
+                refreshCodeDisplay();
+                return;
+            }
         }
         // Try to parse the command as a new statement
         Statement *stmt;
@@ -222,7 +240,7 @@ void MainWindow::parseCmdInput(string cmdInput)
         }
         if (stmt == NULL)
         {
-            QMessageBox::warning(this, "Error::", "NULL statement");
+            // QMessageBox::warning(this, "Error::", "NULL statement");
             return;
         }
         editor->addStatement(stmt->lineNum, stmt);

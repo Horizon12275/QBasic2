@@ -29,8 +29,10 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    Editor *editor; // Code editor pointer
-    Parser *parser; // Parser pointer
+    Editor *editor;                   // Code editor pointer
+    Parser *parser;                   // Parser pointer
+    EvaluationContext *editorContext; // Evaluation context for the editor
+    EvaluationContext *directContext; // Evaluation context for the direct commands
 
     bool isDebugMode = false; // Debug mode flag
 

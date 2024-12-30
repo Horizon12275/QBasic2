@@ -18,3 +18,8 @@ bool EvaluationContext::isDefined(std::string var)
     }
     return true;
 }
+
+void EvaluationContext::clear()
+{
+    symbolTable.clear();
+}

@@ -89,8 +89,12 @@ class IfStmt : public Statement
 {
 public:
     int targetLineNum;
+    Expression *lhs;
+    Expression *rhs;
+    std::string cmpOp;
 
     IfStmt(int lineNum, vector<string> tokens);
+    ~IfStmt();
     std::string getSyntaxTree();
     StatementType type();
     std::string getStatementTypeString();
