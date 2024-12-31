@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setUIExitDebugMode();
     isDebugMode = false;
+    isInputing = false;
 
     // Initialize the editor and parser
     editor = new Editor();
@@ -22,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnRunCode, &QPushButton::clicked, this, &MainWindow::runCode);
     connect(ui->btnLoadCode, &QPushButton::clicked, this, &MainWindow::loadCode);
     connect(ui->btnClearCode, &QPushButton::clicked, this, &MainWindow::cleanAll);
+
+    // Connect the command line input to the corresponding slot function
+    connect(ui->cmdLineEdit, &QLineEdit::textChanged, this, &MainWindow::onCmdLineEditTextChanged);
 }
 
 MainWindow::~MainWindow()
@@ -41,15 +45,34 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_cmdLineEdit_editingFinished()
 {
-    QString cmd = ui->cmdLineEdit->text();
+    cmd = ui->cmdLineEdit->text();
     ui->cmdLineEdit->setText("");
 
+    if (isInputing)
+    {
+        isInputing = false;
+        return;
+    }
+
     parseCmdInput(cmd.toStdString());
+    cmd.clear();
 }
 
 void MainWindow::on_btnClearCode_clicked()
 {
     cleanAll();
+}
+
+void MainWindow::onCmdLineEditTextChanged(const QString &text)
+{
+    if (!text.startsWith(" ? ") && isInputing)
+    {
+        QString newText = " ? " + text.mid(3);
+        ui->cmdLineEdit->blockSignals(true); // 防止递归调用
+        ui->cmdLineEdit->setText(newText);
+        ui->cmdLineEdit->setCursorPosition(newText.length());
+        ui->cmdLineEdit->blockSignals(false);
+    }
 }
 
 /*
@@ -124,8 +147,35 @@ void MainWindow::refreshCodeDisplay()
     ui->CodeDisplay->append(editor->getAllStatements().c_str());
 }
 
-// Basic functions
+bool MainWindow::input(string var)
+{
+    try
+    {
+        isInputing = true;
+        ui->cmdLineEdit->setText(" ? ");
+        while (isInputing)
+        { // 网上查阅了这个函数 会让其他线程执行一部分时间 可以使单线程不被循环阻塞 input操作时就不会卡死 当然用多线程应该也可以实现
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+        }
+        // remove the "?" at the beginning of the input
+        string input = cmd.toStdString().substr(3);
+        if (!parser->isConstant(input))
+        {
+            throw runtime_error("Invalid input: " + input);
+        }
+        directContext->setValue(var, stoi(input));
+        ui->textBrowser->append(cmd);
+    }
+    catch (exception &e)
+    {
+        isInputing = true;
+        QMessageBox::warning(this, "Error::", e.what());
+        return false;
+    }
+    return true;
+}
 
+// Basic functions
 void MainWindow::runCode()
 {
     editorContext->clear();
@@ -135,84 +185,55 @@ void MainWindow::runCode()
     // print Syntax Tree in the treeDisplay
     ui->treeDisplay->append(editor->getAllSyntaxTrees().c_str());
 
-    // Run the code in the editor in order
-    for (auto stmt : editor->code)
+    int currentLine = 0;
+    auto it = editor->code.begin();
+
+    while (it != editor->code.end())
     {
+        if (it == editor->code.end())
+        {
+            throw runtime_error("Invalid line number");
+        }
+
+        currentLine = it->first;
+        Statement *stmt = it->second;
+
         try
         {
-            // The warning "transfer of control bypasses initialization" occurs because the initialization of 
-            // cmpOp is bypassed if an exception is thrown during the evaluation of lhs or rhs. 
-            // To fix this, you can move the declaration of cmpOp before the try block.
-            string cmpOp;
-            switch (stmt.second->type())
+            string cmpOp = "";
+            int l_val = 0, r_val = 0, targetLineNum = 0;
+            switch (stmt->type())
             {
             case PRINT:
-                ui->textBrowser->append(QString::number(dynamic_cast<PrintStmt *>(stmt.second)->rootExp->eval(*editorContext)));
+                ui->textBrowser->append(QString::number(dynamic_cast<PrintStmt *>(stmt)->rootExp->eval(*editorContext)));
                 break;
             case LET:
-                dynamic_cast<LetStmt *>(stmt.second)->rootExp->eval(*editorContext);
+                dynamic_cast<LetStmt *>(stmt)->rootExp->eval(*editorContext);
                 break;
             case INPUT:
-                
+                while (!input(dynamic_cast<InputStmt *>(stmt)->varName))
+                {
+                };
                 break;
             case GOTO:
-                
-                break;
+                currentLine = dynamic_cast<GotoStmt *>(stmt)->targetLineNum;
+                it = editor->code.find(currentLine);
+                continue;
             case IF:
-                int l_val = dynamic_cast<IfStmt *>(stmt.second)->lhs->eval(*editorContext);
-                int r_val = dynamic_cast<IfStmt *>(stmt.second)->rhs->eval(*editorContext);
-                cmpOp = dynamic_cast<IfStmt *>(stmt.second)->cmpOp;
-                int targetLineNum = dynamic_cast<IfStmt *>(stmt.second)->targetLineNum;
-                Statement *targetStmt = NULL;
-                if (cmpOp == "=")
+                l_val = dynamic_cast<IfStmt *>(stmt)->lhs->eval(*editorContext);
+                r_val = dynamic_cast<IfStmt *>(stmt)->rhs->eval(*editorContext);
+                cmpOp = dynamic_cast<IfStmt *>(stmt)->cmpOp;
+                targetLineNum = dynamic_cast<IfStmt *>(stmt)->targetLineNum;
+                if ((cmpOp == "=" && l_val == r_val) ||
+                    (cmpOp == "<" && l_val < r_val) ||
+                    (cmpOp == ">" && l_val > r_val))
                 {
-                    if (l_val == r_val)
-                    {
-                        // find the target line number
-                        if (editor->code.find(targetLineNum) != editor->code.end())
-                        {
-                            targetStmt = editor->code[targetLineNum];
-                        }
-                        else
-                        {
-                            throw std::runtime_error("Invalid line number: " + to_string(targetLineNum));
-                        }
-                    }
-                }
-                else if (cmpOp == "<")
-                {
-                    if (l_val < r_val)
-                    {
-                        // find the target line number
-                        if (editor->code.find(targetLineNum) != editor->code.end())
-                        {
-                            targetStmt = editor->code[targetLineNum];
-                        }
-                        else
-                        {
-                            throw std::runtime_error("Invalid line number: " + to_string(targetLineNum));
-                        }
-                    }
-                }
-                else if (cmpOp == ">")
-                {
-                    if (l_val > r_val)
-                    {
-                        // find the target line number
-                        if (editor->code.find(targetLineNum) != editor->code.end())
-                        {
-                            targetStmt = editor->code[targetLineNum];
-                        }
-                        else
-                        {
-                            throw std::runtime_error("Invalid line number: " + to_string(targetLineNum));
-                        }
-                    }
+                    currentLine = targetLineNum;
+                    it = editor->code.find(currentLine);
+                    continue;
                 }
                 break;
             case END:
-                editorContext->clear();
-                return;
             default:
                 break;
             }
@@ -222,6 +243,8 @@ void MainWindow::runCode()
             QMessageBox::warning(this, "Error::", e.what());
             return;
         }
+
+        ++it;
     }
 
     editorContext->clear();

@@ -23,8 +23,9 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_cmdLineEdit_editingFinished(); // Process the command line input
-    void on_btnClearCode_clicked();        // Clear all states
+    void on_cmdLineEdit_editingFinished();              // Process the command line input
+    void on_btnClearCode_clicked();                     // Clear all states
+    void onCmdLineEditTextChanged(const QString &text); // Process the command line input
 
 private:
     Ui::MainWindow *ui;
@@ -34,7 +35,10 @@ private:
     EvaluationContext *editorContext; // Evaluation context for the editor
     EvaluationContext *directContext; // Evaluation context for the direct commands
 
+    QString cmd; // Command line input
+
     bool isDebugMode = false; // Debug mode flag
+    bool isInputing = false;  // Input flag
 
     // UI functions
     void setUIForDebugMode();  // Set the UI for debug mode
@@ -49,4 +53,6 @@ private:
 
     // Parser functions
     void parseCmdInput(string cmdInput); // Parse the command line input
+
+    bool input(string var); // Input a variable
 };
