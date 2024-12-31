@@ -135,6 +135,95 @@ void MainWindow::runCode()
     // print Syntax Tree in the treeDisplay
     ui->treeDisplay->append(editor->getAllSyntaxTrees().c_str());
 
+    // Run the code in the editor in order
+    for (auto stmt : editor->code)
+    {
+        try
+        {
+            // The warning "transfer of control bypasses initialization" occurs because the initialization of 
+            // cmpOp is bypassed if an exception is thrown during the evaluation of lhs or rhs. 
+            // To fix this, you can move the declaration of cmpOp before the try block.
+            string cmpOp;
+            switch (stmt.second->type())
+            {
+            case PRINT:
+                ui->textBrowser->append(QString::number(dynamic_cast<PrintStmt *>(stmt.second)->rootExp->eval(*editorContext)));
+                break;
+            case LET:
+                dynamic_cast<LetStmt *>(stmt.second)->rootExp->eval(*editorContext);
+                break;
+            case INPUT:
+                
+                break;
+            case GOTO:
+                
+                break;
+            case IF:
+                int l_val = dynamic_cast<IfStmt *>(stmt.second)->lhs->eval(*editorContext);
+                int r_val = dynamic_cast<IfStmt *>(stmt.second)->rhs->eval(*editorContext);
+                cmpOp = dynamic_cast<IfStmt *>(stmt.second)->cmpOp;
+                int targetLineNum = dynamic_cast<IfStmt *>(stmt.second)->targetLineNum;
+                Statement *targetStmt = NULL;
+                if (cmpOp == "=")
+                {
+                    if (l_val == r_val)
+                    {
+                        // find the target line number
+                        if (editor->code.find(targetLineNum) != editor->code.end())
+                        {
+                            targetStmt = editor->code[targetLineNum];
+                        }
+                        else
+                        {
+                            throw std::runtime_error("Invalid line number: " + to_string(targetLineNum));
+                        }
+                    }
+                }
+                else if (cmpOp == "<")
+                {
+                    if (l_val < r_val)
+                    {
+                        // find the target line number
+                        if (editor->code.find(targetLineNum) != editor->code.end())
+                        {
+                            targetStmt = editor->code[targetLineNum];
+                        }
+                        else
+                        {
+                            throw std::runtime_error("Invalid line number: " + to_string(targetLineNum));
+                        }
+                    }
+                }
+                else if (cmpOp == ">")
+                {
+                    if (l_val > r_val)
+                    {
+                        // find the target line number
+                        if (editor->code.find(targetLineNum) != editor->code.end())
+                        {
+                            targetStmt = editor->code[targetLineNum];
+                        }
+                        else
+                        {
+                            throw std::runtime_error("Invalid line number: " + to_string(targetLineNum));
+                        }
+                    }
+                }
+                break;
+            case END:
+                editorContext->clear();
+                return;
+            default:
+                break;
+            }
+        }
+        catch (exception &e)
+        {
+            QMessageBox::warning(this, "Error::", e.what());
+            return;
+        }
+    }
+
     editorContext->clear();
 }
 
@@ -208,6 +297,7 @@ void MainWindow::parseCmdInput(string cmdInput)
     }
     else if (cmdInput == "QUIT")
     {
+        cleanAll();
         this->close();
     }
     else if (cmdInput == "HELP")
@@ -217,7 +307,6 @@ void MainWindow::parseCmdInput(string cmdInput)
     }
     else if (cmdInput == "LOAD")
     {
-        cleanAll();
         loadCode();
     }
     else

@@ -74,7 +74,7 @@ LetStmt::~LetStmt()
 
 std::string LetStmt::getSyntaxTree()
 {
-    return std::to_string(lineNum) + " LET " + rootExp->toString();
+    return std::to_string(lineNum) + " LET " + rootExp->toString() + "\n";
 }
 
 StatementType LetStmt::type()
@@ -105,7 +105,7 @@ PrintStmt::~PrintStmt()
 
 std::string PrintStmt::getSyntaxTree()
 {
-    return std::to_string(lineNum) + " PRINT " + rootExp->toString();
+    return std::to_string(lineNum) + " PRINT\n" + addMYTabBeforeEachLine(rootExp->toString()) + "\n";
 }
 
 StatementType PrintStmt::type()
@@ -132,7 +132,7 @@ InputStmt::InputStmt(int lineNum, vector<string> tokens) : Statement(lineNum, to
 
 std::string InputStmt::getSyntaxTree()
 {
-    return std::to_string(lineNum) + " INPUT\n" + MYTAB + varName;
+    return std::to_string(lineNum) + " INPUT\n" + MYTAB + varName + "\n";
 }
 
 StatementType InputStmt::type()
@@ -158,7 +158,7 @@ GotoStmt::GotoStmt(int lineNum, vector<string> tokens) : Statement(lineNum, toke
 
 std::string GotoStmt::getSyntaxTree()
 {
-    return std::to_string(lineNum) + " GOTO\n" + MYTAB + std::to_string(targetLineNum);
+    return std::to_string(lineNum) + " GOTO\n" + MYTAB + std::to_string(targetLineNum) + "\n";
 }
 
 StatementType GotoStmt::type()
@@ -225,7 +225,7 @@ EndStmt::EndStmt(int lineNum, vector<string> tokens) : Statement(lineNum, tokens
 
 std::string EndStmt::getSyntaxTree()
 {
-    return std::to_string(lineNum) + " END";
+    return std::to_string(lineNum) + " END" + "\n";
 }
 
 StatementType EndStmt::type()

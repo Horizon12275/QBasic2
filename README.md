@@ -33,6 +33,39 @@
 190 END
 ```
 
+```
+100 REM
+     Program to print the Fibonacci sequence.
+110 LET =
+    MAX
+    10000
+120 LET =
+    n1
+    0
+130 LET =
+    n2
+    1
+140 IF THEN
+    Exp >
+        n1
+        max
+    190
+150 LET =
+    n3
+    Exp +
+        n1
+        n2
+160 LET =
+    n1
+    n2
+170 LET =
+    n2
+    n3
+180 GOTO
+    140
+190 END
+```
+
 ## 思路
 
 1. 输入的时候、直接检查这个语句的语法树对不对，然后尝试构建语法树、如果构建失败就报错（除了GOTO）

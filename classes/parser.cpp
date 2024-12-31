@@ -98,7 +98,9 @@ InputStmt *Parser::parseInputStmt(const vector<string> &tokens)
     {
         throw std::runtime_error("Invalid variable name: " + tokens[2]);
     }
-    return new InputStmt(stoi(tokens[0]), tokens);
+    InputStmt *stmt = new InputStmt(stoi(tokens[0]), tokens);
+    stmt->varName = tokens[2];
+    return stmt;
 }
 
 // GOTO 后面是常量

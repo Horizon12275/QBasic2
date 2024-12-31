@@ -5,15 +5,11 @@
 
 class Editor
 {
-
-private:
-    /* data */
+public:
     map<int, Statement *> code;
 
-public:
     Editor();
     ~Editor();
-
     void addStatement(int lineNum, Statement *stmt);
     void removeStatement(int lineNum);
     string getAllStatements();

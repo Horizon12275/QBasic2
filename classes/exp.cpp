@@ -118,22 +118,41 @@ CompoundExp::CompoundExp(std::string op, Expression *lhs, Expression *rhs)
     this->rhs = rhs;
 }
 
-// 递归析构左右子树
 CompoundExp::~CompoundExp()
 {
-    while (lhs != NULL)
+    // 递归析构左子树
+    if (lhs != NULL)
     {
-        Expression *temp = lhs;
-        lhs = lhs->getLHS();
-        delete temp;
+        if (lhs->type() == COMPOUND)
+        {
+            // 如果是复合类型，递归删除左子树
+            delete lhs; // 递归删除整个左子树
+        }
+        else
+        {
+            // 否则直接删除
+            delete lhs;
+        }
+        lhs = nullptr; // 删除后将指针设置为 nullptr
     }
-    while (rhs != NULL)
+
+    // 递归析构右子树
+    if (rhs != NULL)
     {
-        Expression *temp = rhs;
-        rhs = rhs->getRHS();
-        delete temp;
+        if (rhs->type() == COMPOUND)
+        {
+            // 如果是复合类型，递归删除右子树
+            delete rhs; // 递归删除整个右子树
+        }
+        else
+        {
+            // 否则直接删除
+            delete rhs;
+        }
+        rhs = nullptr; // 删除后将指针设置为 nullptr
     }
 }
+
 
 // use for print syntax tree, use BFS, also note the current level
 std::string CompoundExp::toString()
