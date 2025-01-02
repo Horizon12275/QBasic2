@@ -1,0 +1,4 @@
+10 INPUT n1
+20 INPUT n2
+30 LET total = n1 + n2
+40 PRINT total
