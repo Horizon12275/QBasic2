@@ -277,9 +277,14 @@ bool Parser::isValidLineNum(const string &lineNum)
             return false;
         }
     }
-    int num = stoi(lineNum);
-    if (num <= 0 || num >= 1000000)
-    {
+    // catch out_of_range exception
+    try {
+        int num = stoi(lineNum);
+        if (num <= 0 || num >= 1000000)
+        {
+            return false;
+        }
+    } catch (const std::out_of_range &e) {
         return false;
     }
     return true;

@@ -147,7 +147,7 @@ void MainWindow::refreshCodeDisplay()
     ui->CodeDisplay->append(editor->getAllStatements().c_str());
 }
 
-bool MainWindow::input(string var)
+bool MainWindow::input(string var, bool isDirect)
 {
     try
     {
@@ -163,8 +163,15 @@ bool MainWindow::input(string var)
         {
             throw runtime_error("Invalid input: " + input);
         }
-        directContext->setValue(var, stoi(input));
+        if (isDirect)
+        {
+            directContext->setValue(var, stoi(input));
+        }
+        else{
+            editorContext->setValue(var, stoi(input));
+        }
         ui->textBrowser->append(cmd);
+        ui->cmdLineEdit->setText("");
     }
     catch (exception &e)
     {
@@ -211,9 +218,13 @@ void MainWindow::runCode()
                 dynamic_cast<LetStmt *>(stmt)->rootExp->eval(*editorContext);
                 break;
             case INPUT:
-                while (!input(dynamic_cast<InputStmt *>(stmt)->varName))
+                while (!input(dynamic_cast<InputStmt *>(stmt)->varName, false))
                 {
                 };
+                // qDebug() << "input done";
+                // // check the input var name and value
+                // qDebug() << dynamic_cast<InputStmt *>(stmt)->varName.c_str() << " : " << directContext->getValue(dynamic_cast<InputStmt *>(stmt)->varName);
+                // qDebug() << "editorContext: " << editorContext->getValue(dynamic_cast<InputStmt *>(stmt)->varName);
                 break;
             case GOTO:
                 currentLine = dynamic_cast<GotoStmt *>(stmt)->targetLineNum;
@@ -332,6 +343,10 @@ void MainWindow::parseCmdInput(string cmdInput)
     {
         loadCode();
     }
+    else if(directCmd(cmdInput))
+    {
+        /*Do Nothing*/
+    }
     else
     {
         Tokenizer tokenizer;
@@ -370,4 +385,61 @@ void MainWindow::parseCmdInput(string cmdInput)
         editor->addStatement(stmt->lineNum, stmt);
         refreshCodeDisplay();
     }
+}
+
+// The LET, PRINT, and INPUT statements can be executed directly by typing them without a 
+// line number, in which case they are evaluated immediately
+bool MainWindow::directCmd(string cmd)
+{
+    Tokenizer tokenizer;
+    vector<string> tokens = tokenizer.tokenize(cmd);
+    // if the first token is not LET, PRINT, or INPUT, return false
+    if (tokens.empty() || (tokens[0] != "LET" && tokens[0] != "PRINT" && tokens[0] != "INPUT"))
+    {
+        return false;
+    }
+    // add a virtual line number to the direct command
+    tokens.insert(tokens.begin(), "10");
+    Statement *stmt;
+    try
+    {
+        stmt = parser->parseStatement(tokens);
+    }
+    catch (exception &e)
+    {
+        QMessageBox::warning(this, "Error::", e.what());
+        return true;
+    }
+    if (stmt == NULL)
+    {
+        return true;
+    }
+    try{
+        switch (stmt->type())
+        {
+        case PRINT:
+            ui->textBrowser->append(QString::number(dynamic_cast<PrintStmt *>(stmt)->rootExp->eval(*directContext)));
+            break;
+        case LET:
+            dynamic_cast<LetStmt *>(stmt)->rootExp->eval(*directContext);
+            break;
+        case INPUT:
+            while (!input(dynamic_cast<InputStmt *>(stmt)->varName, true))
+            {
+            };
+            break;
+        default:
+            QMessageBox::warning(this, "Error::", "Invalid direct command");
+            delete stmt;
+            return true;
+        }
+    }
+    catch (exception &e)
+    {
+        QMessageBox::warning(this, "Error::", e.what());
+        delete stmt;
+        return true;
+    }
+    delete stmt;
+    return true;
 }

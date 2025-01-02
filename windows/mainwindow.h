@@ -53,6 +53,7 @@ private:
 
     // Parser functions
     void parseCmdInput(string cmdInput); // Parse the command line input
+    bool directCmd(string cmd);          // Process the direct command
 
-    bool input(string var); // Input a variable
+    bool input(string var, bool isDirect); // Input a variable
 };
