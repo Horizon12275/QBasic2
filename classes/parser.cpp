@@ -278,13 +278,16 @@ bool Parser::isValidLineNum(const string &lineNum)
         }
     }
     // catch out_of_range exception
-    try {
+    try
+    {
         int num = stoi(lineNum);
         if (num <= 0 || num >= 1000000)
         {
             return false;
         }
-    } catch (const std::out_of_range &e) {
+    }
+    catch (const std::out_of_range &e)
+    {
         return false;
     }
     return true;
@@ -297,7 +300,7 @@ bool Parser::varNameValid(const string &varName)
     {
         return false;
     }
-    vector<string> KEYWORDS = {"REM", "LET", "PRINT", "INPUT", "GOTO", "IF", "THEN", "END", "RUN", "LOAD", "LIST", "CLEAR", "HELP", "QUIT"};
+    vector<string> KEYWORDS = {"REM", "LET", "PRINT", "INPUT", "GOTO", "IF", "THEN", "END", "RUN", "LOAD", "LIST", "CLEAR", "HELP", "QUIT", "ADD", "DELETE"};
     if (find(KEYWORDS.begin(), KEYWORDS.end(), varName) != KEYWORDS.end())
     {
         return false;
@@ -330,6 +333,19 @@ bool Parser::isConstant(const string &str)
         }
     }
     return true;
+}
+
+bool Parser::isNegativeConstant(const string &str)
+{
+    if (str.empty())
+    {
+        return false;
+    }
+    if (str[0] != '-')
+    {
+        return false;
+    }
+    return isConstant(str.substr(1));
 }
 
 bool Parser::isOperator(const string &str)

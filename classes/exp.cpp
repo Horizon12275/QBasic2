@@ -153,12 +153,11 @@ CompoundExp::~CompoundExp()
     }
 }
 
-
 // use for print syntax tree, use BFS, also note the current level
 std::string CompoundExp::toString()
 {
     int level = 0;
-    std::string res = this->op + "\n";
+    std::string res = this->getOperator() + "\n";
     std::queue<Expression *> current_level;
     std::queue<Expression *> next_level;
     current_level.push(lhs);
@@ -206,6 +205,14 @@ ExpressionType CompoundExp::type()
 
 std::string CompoundExp::getOperator()
 {
+    if (op == "%")
+    {
+        return "MOD";
+    }
+    else if (op == "^")
+    {
+        return "**";
+    }
     return op;
 }
 
@@ -248,7 +255,7 @@ int CompoundExp::eval(EvaluationContext &context)
         {
             throw std::runtime_error("MOD by 0");
         }
-        return left % right;
+        return myMod(left, right);
     }
     if (op == "^")
     {

@@ -16,3 +16,5 @@ std::string addTabBefore(int tabCnt, std::string str);
 std::string addMYTabBeforeEachLine(std::string str);
 
 int getPrecedence(std::string op);
+
+string trim(const string &s);

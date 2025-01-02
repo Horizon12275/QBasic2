@@ -1,0 +1,8 @@
+60 END 
+50 PRINT total 
+51 PRINT n1 MOD n2
+52 PRINT n1 ** n2 
+10 REM Program to add two numbers 
+20 INPUT n1 
+30 INPUT n2 
+40 LET total = n1 + n2 

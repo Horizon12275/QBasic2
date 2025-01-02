@@ -87,6 +87,8 @@
     "regex": "cpp",
     "set": "cpp",
     "source_location": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "bitset": "cpp",
+    "stack": "cpp"
   }
 }

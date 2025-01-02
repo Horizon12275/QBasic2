@@ -4,16 +4,17 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-    setUIExitDebugMode();
-    isDebugMode = false;
-    isInputing = false;
-
     // Initialize the editor and parser
     editor = new Editor();
     parser = new Parser();
     editorContext = new EvaluationContext();
     directContext = new EvaluationContext();
+
+    ui->setupUi(this);
+    setUIExitDebugMode();
+    isDebugMode = false;
+    isInputing = false;
+    isPaused = false;
 
     // Connect the button to switch to debug mode with the slot function
     connect(ui->btnDebugMode, &QPushButton::clicked, this, &MainWindow::setUIForDebugMode);
@@ -22,10 +23,11 @@ MainWindow::MainWindow(QWidget *parent)
     // Connect the button to corresponding slot functions
     connect(ui->btnRunCode, &QPushButton::clicked, this, &MainWindow::runCode);
     connect(ui->btnLoadCode, &QPushButton::clicked, this, &MainWindow::loadCode);
-    connect(ui->btnClearCode, &QPushButton::clicked, this, &MainWindow::cleanAll);
+    connect(ui->btnClearCode, &QPushButton::clicked, this, &MainWindow::on_btnClearCode_clicked);
+    connect(ui->btnDebugResume, &QPushButton::clicked, this, &MainWindow::on_btnResume_clicked);
 
     // Connect the command line input to the corresponding slot function
-    connect(ui->cmdLineEdit, &QLineEdit::textChanged, this, &MainWindow::onCmdLineEditTextChanged);
+    connect(ui->cmdLineEdit, &QLineEdit::textChanged, this, &MainWindow::on_cmdLineEditText_changed);
 }
 
 MainWindow::~MainWindow()
@@ -60,10 +62,15 @@ void MainWindow::on_cmdLineEdit_editingFinished()
 
 void MainWindow::on_btnClearCode_clicked()
 {
+    if (isInputing)
+    {
+        QMessageBox::warning(this, "Error::", "Please finish the input first");
+        return;
+    }
     cleanAll();
 }
 
-void MainWindow::onCmdLineEditTextChanged(const QString &text)
+void MainWindow::on_cmdLineEditText_changed(const QString &text)
 {
     if (!text.startsWith(" ? ") && isInputing)
     {
@@ -85,6 +92,13 @@ void MainWindow::onCmdLineEditTextChanged(const QString &text)
 
 void MainWindow::setUIForDebugMode()
 {
+    // if is inputing, dont enter debug mode
+    if (isInputing)
+    {
+        QMessageBox::warning(this, "Error::", "Please finish the input first");
+        return;
+    }
+
     // UI operations
     ui->btnClearCode->setVisible(false);
     ui->btnLoadCode->setVisible(false);
@@ -101,12 +115,30 @@ void MainWindow::setUIForDebugMode()
     ui->labelBreakPoints->setVisible(true);
     ui->breakPointsDisplay->setVisible(true);
 
+    ui->treeDisplay->clear();
+    ui->breakPointsDisplay->clear();
+    ui->monitorDisplay->clear();
+    ui->textBrowser->clear();
+    ui->cmdLineEdit->clear();
+
     // Variables operations
     isDebugMode = true;
+    isInputing = false;
+    isPaused = false;
+    editorContext->clear();
+    directContext->clear();
+    breakPoints.clear();
 }
 
 void MainWindow::setUIExitDebugMode()
 {
+    // if is inputing, dont exit debug mode
+    if (isInputing)
+    {
+        QMessageBox::warning(this, "Error::", "Please finish the input first");
+        return;
+    }
+
     // UI operations
     ui->btnClearCode->setVisible(true);
     ui->btnLoadCode->setVisible(true);
@@ -123,8 +155,19 @@ void MainWindow::setUIExitDebugMode()
     ui->labelBreakPoints->setVisible(false);
     ui->breakPointsDisplay->setVisible(false);
 
+    ui->treeDisplay->clear();
+    ui->breakPointsDisplay->clear();
+    ui->monitorDisplay->clear();
+    ui->textBrowser->clear();
+    ui->cmdLineEdit->clear();
+
     // Variables operations
     isDebugMode = false;
+    isInputing = false;
+    isPaused = false;
+    editorContext->clear();
+    directContext->clear();
+    breakPoints.clear();
 }
 
 // Clear all code and initialize all variables
@@ -159,7 +202,8 @@ bool MainWindow::input(string var, bool isDirect)
         }
         // remove the "?" at the beginning of the input
         string input = cmd.toStdString().substr(3);
-        if (!parser->isConstant(input))
+        input = trim(input);
+        if (!parser->isConstant(input) && !parser->isNegativeConstant(input))
         {
             throw runtime_error("Invalid input: " + input);
         }
@@ -167,7 +211,8 @@ bool MainWindow::input(string var, bool isDirect)
         {
             directContext->setValue(var, stoi(input));
         }
-        else{
+        else
+        {
             editorContext->setValue(var, stoi(input));
         }
         ui->textBrowser->append(cmd);
@@ -189,6 +234,7 @@ void MainWindow::runCode()
     ui->textBrowser->clear();
     ui->treeDisplay->clear();
     ui->monitorDisplay->clear();
+    isInputing = false;
 
     // print Syntax Tree in the treeDisplay
     ui->treeDisplay->append(editor->getAllSyntaxTrees().c_str());
@@ -205,6 +251,18 @@ void MainWindow::runCode()
 
         currentLine = it->first;
         Statement *stmt = it->second;
+
+        // check if the current line is a break point
+        if (isDebugMode && breakPoints[currentLine])
+        {
+            isPaused = true;
+            ui->textBrowser->append("Paused at line " + QString::number(currentLine));
+            refreshMonitorDisplay();
+            while (isPaused)
+            {
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+            }
+        }
 
         try
         {
@@ -257,19 +315,25 @@ void MainWindow::runCode()
         }
 
         ++it;
+        ui->monitorDisplay->clear();
     }
 
     editorContext->clear();
 }
 
-void MainWindow::debugRunCode()
+void MainWindow::on_btnResume_clicked()
 {
-    editorContext->clear();
-    editorContext->clear();
+    isPaused = false;
 }
 
 void MainWindow::loadCode()
 {
+    if (isInputing)
+    {
+        QMessageBox::warning(this, "Error::", "Please finish the input first");
+        return;
+    }
+
     // 通过文件选择器选择一个文件
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Text Files (*.txt)"));
     cleanAll();
@@ -287,28 +351,6 @@ void MainWindow::loadCode()
     }
 }
 
-// Helper function to trim leading and trailing spaces
-string trim(const string &s)
-{
-    if (s.empty())
-    {
-        return s;
-    }
-    auto start = s.begin();
-    while (start != s.end() && isspace(*start))
-    {
-        start++;
-    }
-
-    auto end = s.end();
-    do
-    {
-        end--;
-    } while (end >= start && isspace(*end));
-
-    return string(start, end + 1);
-}
-
 // Parser functions
 // Two kinds of commands:
 // 1. RUN: run the code in the editor: e.g. RUN
@@ -318,7 +360,11 @@ void MainWindow::parseCmdInput(string cmdInput)
     // Elimitate the leading and trailing spaces
     cmdInput = trim(cmdInput);
     // Check if the command is a RUN command
-    if (cmdInput == "RUN")
+    if (isDebugMode)
+    {
+        handleDebugCmd(cmdInput);
+    }
+    else if (cmdInput == "RUN")
     {
         runCode();
     }
@@ -344,7 +390,7 @@ void MainWindow::parseCmdInput(string cmdInput)
     {
         loadCode();
     }
-    else if(directCmd(cmdInput))
+    else if (directCmd(cmdInput))
     {
         /*Do Nothing*/
     }
@@ -363,6 +409,11 @@ void MainWindow::parseCmdInput(string cmdInput)
             if (parser->isValidLineNum(tokens[0]))
             {
                 editor->removeStatement(stoi(tokens[0]));
+                if (isDebugMode)
+                {
+                    breakPoints[stoi(tokens[0])] = false;
+                    refreshBreakPointDisplay();
+                }
                 refreshCodeDisplay();
                 return;
             }
@@ -388,7 +439,7 @@ void MainWindow::parseCmdInput(string cmdInput)
     }
 }
 
-// The LET, PRINT, and INPUT statements can be executed directly by typing them without a 
+// The LET, PRINT, and INPUT statements can be executed directly by typing them without a
 // line number, in which case they are evaluated immediately
 bool MainWindow::directCmd(string cmd)
 {
@@ -415,7 +466,8 @@ bool MainWindow::directCmd(string cmd)
     {
         return true;
     }
-    try{
+    try
+    {
         switch (stmt->type())
         {
         case PRINT:
@@ -443,4 +495,69 @@ bool MainWindow::directCmd(string cmd)
     }
     delete stmt;
     return true;
+}
+
+bool MainWindow::handleDebugCmd(string cmd)
+{
+    Tokenizer tokenizer;
+    vector<string> tokens = tokenizer.tokenize(cmd);
+    if (tokens.empty())
+    {
+        return false;
+    }
+    if (tokens[0] == "ADD")
+    {
+        if (tokens.size() != 2)
+        {
+            QMessageBox::warning(this, "Error::", "Invalid ADD statement");
+            return true;
+        }
+        if (!parser->isValidLineNum(tokens[1]) || editor->code.find(stoi(tokens[1])) == editor->code.end())
+        {
+            QMessageBox::warning(this, "Error::", "Invalid line number");
+            return true;
+        }
+        breakPoints[stoi(tokens[1])] = true;
+        refreshBreakPointDisplay();
+        return true;
+    }
+    if (tokens[0] == "DELETE")
+    {
+        if (tokens.size() != 2)
+        {
+            QMessageBox::warning(this, "Error::", "Invalid DELETE statement");
+            return true;
+        }
+        if (!parser->isValidLineNum(tokens[1]) || editor->code.find(stoi(tokens[1])) == editor->code.end())
+        {
+            QMessageBox::warning(this, "Error::", "Invalid line number");
+            return true;
+        }
+        breakPoints[stoi(tokens[1])] = false;
+        refreshBreakPointDisplay();
+        return true;
+    }
+    QMessageBox::warning(this, "Error::", "Invalid debug command");
+    return false;
+}
+
+void MainWindow::refreshBreakPointDisplay()
+{
+    ui->breakPointsDisplay->clear();
+    for (auto bp : breakPoints)
+    {
+        if (bp.second)
+        {
+            ui->breakPointsDisplay->append(QString::number(bp.first));
+        }
+    }
+}
+
+void MainWindow::refreshMonitorDisplay()
+{
+    ui->monitorDisplay->clear();
+    for (auto var : editorContext->symbolTable)
+    {
+        ui->monitorDisplay->append(QString::fromStdString(var.first) + " = " + QString::number(var.second));
+    }
 }

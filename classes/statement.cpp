@@ -24,7 +24,19 @@ std::string Statement::getContent()
     std::string content = "";
     for (size_t i = 1; i < tokens.size(); i++)
     {
-        content += tokens[i] + " ";
+        // substitude the % and ^ with their corresponding operators
+        if (tokens[i] == "%")
+        {
+            content += "MOD ";
+        }
+        else if (tokens[i] == "^")
+        {
+            content += "** ";
+        }
+        else
+        {
+            content += tokens[i] + " ";
+        }
     }
     return content;
 }

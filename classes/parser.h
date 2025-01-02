@@ -23,6 +23,7 @@ public:
     bool varNameValid(const string &varName);
     bool isValidLineNum(const string &lineNum);
     bool isConstant(const string &str);
+    bool isNegativeConstant(const string &str);
     bool isOperator(const string &str);
     bool isValidExpression(const vector<string> &tokens);
 };

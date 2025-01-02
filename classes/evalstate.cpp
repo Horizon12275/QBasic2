@@ -21,5 +21,9 @@ bool EvaluationContext::isDefined(std::string var)
 
 void EvaluationContext::clear()
 {
+    if (symbolTable.empty())
+    {
+        return;
+    }
     symbolTable.clear();
 }

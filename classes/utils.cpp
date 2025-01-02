@@ -64,3 +64,25 @@ std::string addMYTabBeforeEachLine(std::string str)
     newStr += MYTAB + line;
     return newStr;
 }
+
+// Helper function to trim leading and trailing spaces
+string trim(const string &s)
+{
+    if (s.empty())
+    {
+        return s;
+    }
+    auto start = s.begin();
+    while (start != s.end() && isspace(*start))
+    {
+        start++;
+    }
+
+    auto end = s.end();
+    do
+    {
+        end--;
+    } while (end >= start && isspace(*end));
+
+    return string(start, end + 1);
+}
