@@ -186,6 +186,7 @@ bool MainWindow::input(string var, bool isDirect)
 void MainWindow::runCode()
 {
     editorContext->clear();
+    ui->textBrowser->clear();
     ui->treeDisplay->clear();
     ui->monitorDisplay->clear();
 
@@ -269,9 +270,9 @@ void MainWindow::debugRunCode()
 
 void MainWindow::loadCode()
 {
-    cleanAll();
     // 通过文件选择器选择一个文件
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Text Files (*.txt)"));
+    cleanAll();
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
